@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Real-Time Pictography Board</title>
+    <style>
+        :root {
+            --bg-color: #1e1e24;
+            --panel-bg: #2b2b36;
+            --text-color: #ffffff;
+            --canvas-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body, html {
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent scrolling on mobile */
+        }
+
+        /* Toolbar Styling */
+        #toolbar {
+            background-color: var(--panel-bg);
+            padding: 10px 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .tool-label {
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        /* Color Buttons */
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .color-btn.active {
+            border: 2px solid #fff;
+            transform: scale(1.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+
+        /* Stroke Buttons */
+        .stroke-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background-color: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .stroke-btn.active {
+            border-color: #fff;
+            background-color: #666;
+        }
+
+        .stroke-dot {
+            background-color: #fff;
+            border-radius: 50%;
+        }
+
+        /* Status Indicator */
+        #status {
+            color: #ff4d4d;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: auto;
+        }
+        #status.connected { color: #4CAF50; }
+
+        /* Canvas Container */
+        #canvas-wrapper {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow: hidden;
+        }
+
+        /* The Canvas 
+           We use a fixed logical size (1000x1000) and scale it with CSS. 
+           This guarantees that portrait and landscape users share the exact same coordinate system.
+        */
+        #board {
+            background-color: var(--canvas-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1; /* Keeps it perfectly square on all devices */
+            touch-action: none; /* Crucial: stops browser panning/zooming when drawing */
+            cursor: crosshair;
+        }
+
+        /* Responsive behavior */
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            #toolbar { 
+                flex-direction: column; 
+                width: 280px; 
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+            .tool-group { flex-wrap: wrap; justify-content: center; }
+            #status { margin-left: 0; margin-top: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toolbar">
+        <div class="tool-label" style="width: 100%; text-align: center; font-size: 18px; margin-bottom: 5px;">Pictography</div>
+        
+        <!-- Colors -->
+        <div class="tool-group" id="color-picker">
+            <span class="tool-label">Colors</span>
+            <!-- Dynamically generated via JS -->
+        </div>
+
+        <!-- Thickness -->
+        <div class="tool-group" id="stroke-picker">
+            <span class="tool-label">Size</span>
+            <!-- Dynamically generated via JS -->
+        </div>
+
+        <!-- Connection Status -->
+        <div id="status">Disconnected</div>
+    </div>
+
+    <div id="canvas-wrapper">
+        <!-- Virtual resolution of 1000x1000 ensures perfect mapping across different device screen sizes -->
+        <canvas id="board" width="1000" height="1000"></canvas>
+    </div>
+
+    <script>
+        // --- 1. CONFIGURATION ---
+        const colors =[
+            '#000000', '#FFFFFF', '#FF3B30', '#34C759', 
+            '#007AFF', '#FFCC00', '#FF9500', '#AF52DE', 
+            '#FF2D55', '#A2845E', '#8E8E93', '#5AC8FA'
+        ];
+        const strokes = [1, 2, 4, 6, 8];
+
+        let currentColor = colors[0];
+        let currentStroke = strokes[2]; // Default to 4px
+
+        // --- 2. UI SETUP ---
+        const colorPicker = document.getElementById('color-picker');
+        colors.forEach(color => {
+            const btn = document.createElement('div');
+            btn.className = 'color-btn';
+            btn.style.backgroundColor = color;
+            if(color === currentColor) btn.classList.add('active');
+            
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentColor = color;
+            });
+            colorPicker.appendChild(btn);
+        });
+
+        const strokePicker = document.getElementById('stroke-picker');
+        strokes.forEach(width => {
+            const btn = document.createElement('div');
+            btn.className = 'stroke-btn';
+            if(width === currentStroke) btn.classList.add('active');
+            
+            const dot = document.createElement('div');
+            dot.className = 'stroke-dot';
+            // Scale visually for the UI
+            dot.style.width = (width * 2) + 'px';
+            dot.style.height = (width * 2) + 'px';
+            
+            btn.appendChild(dot);
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.stroke-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentStroke = width;
+            });
+            strokePicker.appendChild(btn);
+        });
+
+        // --- 3. WEBSOCKET SETUP ---
+        // REPLACE this URL with your actual WebSocket server URL
+        const WS_URL = 'ws://localhost:3000'; 
+        let socket;
+        const statusEl = document.getElementById('status');
+
+        function connectWebSocket() {
+            socket = new WebSocket(WS_URL);
+
+            socket.onopen = () => {
+                statusEl.textContent = '● Connected';
+                statusEl.classList.add('connected');
+            };
+
+            socket.onclose = () => {
+                statusEl.textContent = '● Disconnected (Retrying...)';
+                statusEl.classList.remove('connected');
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                if (data.type === 'draw') {
+                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.width, false);
+                }
+            };
+        }
+        connectWebSocket();
+
+        // --- 4. CANVAS DRAWING LOGIC ---
+        const canvas = document.getElementById('board');
+        const ctx = canvas.getContext('2d');
+        
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Fill canvas with white initially
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        // Calculate coordinates relative to the 1000x1000 internal resolution
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
+            // Handle touch events
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            }
+
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        function drawLine(x0, y0, x1, y1, color, width, emit) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+            ctx.closePath();
+
+            if (!emit || !socket || socket.readyState !== WebSocket.OPEN) return;
+
+            // Send drawing data to other players
+            const drawData = {
+                type: 'draw',
+                x0: x0, y0: y0, x1: x1, y1: y1,
+                color: color,
+                width: width
+            };
+            socket.send(JSON.stringify(drawData));
+        }
+
+        function startDrawing(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const pos = getMousePos(e);
+            lastX = pos.x;
+            lastY = pos.y;
+            
+            // Draw a single dot if user just clicks
+            drawLine(lastX, lastY, lastX, lastY, currentColor, currentStroke, true);
+        }
+
+        function continueDrawing(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const pos = getMousePos(e);
+            drawLine(lastX, lastY, pos.x, pos.y, currentColor, currentStroke, true);
+            lastX = pos.x;
+            lastY = pos.y;
+        }
+
+        function stopDrawing(e) {
+            e.preventDefault();
+            isDrawing = false;
+        }
+
+        // Mouse Events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', continueDrawing);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch Events (Mobile Support)
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', continueDrawing, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+
+    </script>
+</body>
+</html>
