@@ -12,69 +12,159 @@
             --canvas-bg: #ffffff;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
         body, html {
-            width: 100vw; height: 100vh; background-color: var(--bg-color);
-            display: flex; flex-direction: column; overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         #toolbar {
-            background-color: var(--panel-bg); padding: 10px 15px;
-            display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3); z-index: 10;
-        }
-
-        #main-heading {
-            width: 100%; text-align: center; font-size: 20px; margin-bottom: 5px; 
-            color: var(--text-color); font-weight: bold; cursor: pointer; user-select: none;
+            background-color: var(--panel-bg);
+            padding: 10px 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 10;
         }
 
         .tool-group {
-            display: flex; gap: 8px; align-items: center; background: rgba(0,0,0,0.2);
-            padding: 8px 12px; border-radius: 8px; flex-wrap: wrap; justify-content: center;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 8px;
         }
 
-        .tool-label { color: var(--text-color); font-size: 14px; font-weight: 600; margin-right: 5px; }
-
-        .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform 0.1s; }
-        .color-btn.active { border: 2px solid #fff; transform: scale(1.2); box-shadow: 0 0 5px rgba(255,255,255,0.5); }
-
-        .stroke-btn { width: 35px; height: 35px; border-radius: 8px; border: 2px solid transparent; background-color: #444; display: flex; justify-content: center; align-items: center; cursor: pointer; transition: background 0.2s; }
-        .stroke-btn.active { border-color: #fff; background-color: #666; }
-        .stroke-dot { background-color: #fff; border-radius: 50%; }
-
-        /* Action Buttons */
-        .action-btn {
-            border: none; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; 
-            cursor: pointer; color: white; transition: filter 0.2s;
+        /* Highlight Admin Tools */
+        #admin-tools {
+            background: rgba(255, 77, 77, 0.2);
+            display: none; /* Hidden by default */
         }
-        .action-btn:hover { filter: brightness(1.2); }
-        .action-btn:active { transform: scale(0.95); }
 
-        #back-btn { background-color: #f39c12; }
-        #clear-btn { background-color: #e74c3c; }
-        #admin-btn { background-color: #8e44ad; }
-        #clear-all-btn { background-color: #c0392b; display: none; }
-        #clear-others-btn { background-color: #d35400; display: none; }
+        .tool-label {
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
 
-        #status { color: #ff4d4d; font-size: 12px; font-weight: bold; margin-left: auto; }
+        #main-heading {
+            width: 100%; 
+            text-align: center; 
+            font-size: 18px; 
+            margin-bottom: 5px;
+            user-select: none; /* Prevent text highlighting during rapid taps */
+            cursor: pointer;
+        }
+
+        .color-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .color-btn.active {
+            border: 2px solid #fff;
+            transform: scale(1.2);
+            box-shadow: 0 0 5px rgba(255,255,255,0.5);
+        }
+
+        .stroke-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            background-color: #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .stroke-btn.active {
+            border-color: #fff;
+            background-color: #666;
+        }
+
+        .stroke-dot {
+            background-color: #fff;
+            border-radius: 50%;
+        }
+
+        /* Button Styles */
+        button {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            color: white;
+        }
+        button:hover { opacity: 0.8; }
+        
+        #back-btn { background-color: #ff9500; }
+        #clear-btn { background-color: #ff4d4d; }
+        .admin-btn { background-color: #8E8E93; }
+
+        #status {
+            color: #ff4d4d;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: auto;
+            user-select: none;
+            cursor: pointer;
+        }
         #status.connected { color: #4CAF50; }
 
         #canvas-wrapper {
-            flex-grow: 1; display: flex; justify-content: center; align-items: center;
-            padding: 15px; overflow: hidden;
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            overflow: hidden;
         }
 
         #board {
-            background-color: var(--canvas-bg); border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 100%; max-height: 100%;
-            aspect-ratio: 1 / 1; touch-action: none; cursor: crosshair;
+            background-color: var(--canvas-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 100%;
+            max-height: 100%;
+            aspect-ratio: 1 / 1;
+            touch-action: none;
+            cursor: crosshair;
         }
 
         @media (min-width: 768px) {
             body { flex-direction: row; }
-            #toolbar { flex-direction: column; width: 280px; justify-content: flex-start; overflow-y: auto; }
+            #toolbar { 
+                flex-direction: column; 
+                width: 280px; 
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+            .tool-group { flex-wrap: wrap; justify-content: center; }
             #status { margin-left: 0; margin-top: auto; }
         }
     </style>
@@ -82,23 +172,32 @@
 <body>
 
     <div id="toolbar">
-        <div id="main-heading">Pictography</div>
+        <div id="main-heading" class="tool-label">Pictography</div>
         
-        <!-- Colors & Size -->
-        <div class="tool-group" id="color-picker"><span class="tool-label">Colors</span></div>
-        <div class="tool-group" id="stroke-picker"><span class="tool-label">Size</span></div>
-
-        <!-- Action Buttons -->
-        <div class="tool-group">
-            <button id="back-btn" class="action-btn">Back</button>
-            <button id="clear-btn" class="action-btn">Clear Mine</button>
-            <button id="admin-btn" class="action-btn">Admin</button>
-            
-            <!-- Hidden until authenticated -->
-            <button id="clear-all-btn" class="action-btn">Clear All</button>
-            <button id="clear-others-btn" class="action-btn">Clear Others</button>
+        <!-- Colors -->
+        <div class="tool-group" id="color-picker">
+            <span class="tool-label">Colors</span>
         </div>
 
+        <!-- Thickness -->
+        <div class="tool-group" id="stroke-picker">
+            <span class="tool-label">Size</span>
+        </div>
+
+        <!-- Actions -->
+        <div class="tool-group">
+            <button id="back-btn">Back</button>
+            <button id="clear-btn">Clear My Drawings</button>
+        </div>
+
+        <!-- Admin Tools (Hidden initially) -->
+        <div class="tool-group" id="admin-tools">
+            <span class="tool-label" style="width:100%;text-align:center;">Admin</span>
+            <button id="clear-all-btn" class="admin-btn">Clear All</button>
+            <button id="clear-except-me-btn" class="admin-btn">Clear All Except Me</button>
+        </div>
+
+        <!-- Connection Status -->
         <div id="status">Disconnected</div>
     </div>
 
@@ -108,20 +207,30 @@
 
     <script>
         // --- 1. CONFIGURATION ---
-        const colors =['#000000', '#FFFFFF', '#FF3B30', '#34C759', '#007AFF', '#FFCC00', '#FF9500', '#AF52DE', '#FF2D55', '#A2845E', '#8E8E93', '#5AC8FA'];
+        const colors =[
+            '#000000', '#FFFFFF', '#FF3B30', '#34C759', 
+            '#007AFF', '#FFCC00', '#FF9500', '#AF52DE', 
+            '#FF2D55', '#A2845E', '#8E8E93', '#5AC8FA'
+        ];
         const strokes =[1, 2, 4, 6, 8];
+
         let currentColor = colors[0];
-        let currentStroke = strokes[2];
+        let currentStroke = strokes[2]; 
+        
+        let currentStrokeId = null; // Used for "Undo" functionality
 
         // --- 2. UI SETUP ---
         const colorPicker = document.getElementById('color-picker');
         colors.forEach(color => {
             const btn = document.createElement('div');
-            btn.className = 'color-btn'; btn.style.backgroundColor = color;
+            btn.className = 'color-btn';
+            btn.style.backgroundColor = color;
             if(color === currentColor) btn.classList.add('active');
+            
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); currentColor = color;
+                btn.classList.add('active');
+                currentColor = color;
             });
             colorPicker.appendChild(btn);
         });
@@ -131,183 +240,240 @@
             const btn = document.createElement('div');
             btn.className = 'stroke-btn';
             if(width === currentStroke) btn.classList.add('active');
+            
             const dot = document.createElement('div');
-            dot.className = 'stroke-dot'; dot.style.width = (width * 2) + 'px'; dot.style.height = (width * 2) + 'px';
+            dot.className = 'stroke-dot';
+            dot.style.width = (width * 2) + 'px';
+            dot.style.height = (width * 2) + 'px';
+            
             btn.appendChild(dot);
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.stroke-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); currentStroke = width;
+                btn.classList.add('active');
+                currentStroke = width;
             });
             strokePicker.appendChild(btn);
         });
 
-        // --- 3. BUTTON ACTIONS ---
-        let adminPassword = "";
-
-        // Send an Event helper
-        function sendEvent(data) {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify(data));
-            }
+        // Generate a random string for identifying specific drawing strokes
+        function generateStrokeId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2);
         }
 
-        document.getElementById('back-btn').addEventListener('click', () => sendEvent({ type: 'undo' }));
-        document.getElementById('clear-btn').addEventListener('click', () => sendEvent({ type: 'clear' }));
-        
-        // Admin Features
-        document.getElementById('admin-btn').addEventListener('click', () => {
-            let p = prompt("Enter Admin Password:");
-            if (p === "Srizzler") {
-                adminPassword = p;
-                document.getElementById('admin-btn').style.display = 'none';
-                document.getElementById('clear-all-btn').style.display = 'inline-block';
-                document.getElementById('clear-others-btn').style.display = 'inline-block';
-            } else if (p !== null) {
-                alert("Incorrect password!");
+        // --- BUTTON ACTIONS ---
+        document.getElementById('back-btn').addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'undo' }));
             }
         });
 
-        document.getElementById('clear-all-btn').addEventListener('click', () => sendEvent({ type: 'clear_all', password: adminPassword }));
-        document.getElementById('clear-others-btn').addEventListener('click', () => sendEvent({ type: 'clear_others', password: adminPassword }));
+        document.getElementById('clear-btn').addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'clear' }));
+            }
+        });
 
-        // --- 4. EASTER EGG (Secret Place) ---
-        let clickTimes =[];
-        const heading = document.getElementById('main-heading');
-        let currentRoom = "global-room";
+        document.getElementById('clear-all-btn').addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'clear_all', password: 'area51' }));
+            }
+        });
 
-        function handleHeadingClick() {
-            let now = Date.now();
-            clickTimes.push(now);
-            clickTimes = clickTimes.filter(t => now - t < 2000); // Keep clicks from last 2 seconds
-            
-            if (clickTimes.length >= 5) {
-                clickTimes =[]; // Reset
-                let p = prompt("Enter Secret Place Password:");
-                if (p === "area51") {
-                    enterSecretLobby();
-                } else if(p !== null) {
-                    alert("Access Denied.");
+        document.getElementById('clear-except-me-btn').addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'clear_except_me', password: 'area51' }));
+            }
+        });
+
+        // --- MULTI-TAP EASTER EGG LOGIC ---
+        // Helper function to detect rapid consecutive taps
+        function createMultiTapListener(triggerCount, timeWindow, callback) {
+            let tapTimes =[];
+            return function(e) {
+                const now = Date.now();
+                tapTimes.push(now);
+                // Remove taps older than our time window
+                tapTimes = tapTimes.filter(time => now - time < timeWindow);
+                
+                if (tapTimes.length >= triggerCount) {
+                    tapTimes =[]; // Reset
+                    callback();
                 }
             }
         }
-        heading.addEventListener('click', handleHeadingClick);
 
-        function enterSecretLobby() {
-            currentRoom = "secret-room";
-            heading.textContent = "Secret Place";
-            heading.removeEventListener('click', handleHeadingClick); // Remove feature
-            
-            // Disconnect and reconnect to new room
-            intentionallyClosing = true;
-            if (socket) socket.close();
-            
-            // Clean local canvas immediately to hide global art
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            intentionallyClosing = false;
-            connectWebSocket(); // Reconnects with new currentRoom
-        }
+        // Easter Egg 1: Admin Mode (Status indicator)
+        const statusTapHandler = createMultiTapListener(7, 2000, () => {
+            const pwd = prompt("Enter Admin Password:");
+            if (pwd === "area51") {
+                document.getElementById('admin-tools').style.display = 'flex';
+                alert("Admin Mode Unlocked.");
+            }
+        });
+        document.getElementById('status').addEventListener('pointerdown', statusTapHandler);
 
-        // --- 5. WEBSOCKET SETUP ---
+        // Easter Egg 2: Secret Place (Heading)
+        const headingElement = document.getElementById('main-heading');
+        const headingTapHandler = createMultiTapListener(7, 2000, () => {
+            const pwd = prompt("Enter Secret Place Password:");
+            if (pwd === "paiza") {
+                alert("Teleporting to Secret Place...");
+                
+                // 1. Update UI
+                headingElement.textContent = "Secret Place";
+                headingElement.style.color = "#FFD700"; // Give it a gold color
+                
+                // 2. Remove listener so it can't be triggered again
+                headingElement.removeEventListener('pointerdown', headingTapHandler);
+                
+                // 3. Switch rooms
+                currentRoom = 'secret';
+                
+                // Disconnect. The onclose handler will automatically reconnect us 
+                // using the new currentRoom variable!
+                if (socket) socket.close(); 
+            }
+        });
+        headingElement.addEventListener('pointerdown', headingTapHandler);
+
+
+        // --- 3. WEBSOCKET SETUP ---
         const BASE_WS_URL = 'wss://pictography-backend.storm-fyre.workers.dev'; 
+        let currentRoom = 'global-room';
         let socket;
-        let intentionallyClosing = false;
+        let reconnectTimeout;
         const statusEl = document.getElementById('status');
 
         function connectWebSocket() {
-            // Attach the room parameter to the URL
-            socket = new WebSocket(`${BASE_WS_URL}?room=${currentRoom}`);
+            // Append the room name to the URL
+            const url = `${BASE_WS_URL}?room=${currentRoom}`;
+            socket = new WebSocket(url);
 
             socket.onopen = () => {
                 statusEl.textContent = '● Connected';
                 statusEl.classList.add('connected');
+                clearTimeout(reconnectTimeout);
             };
 
             socket.onclose = () => {
-                statusEl.textContent = '● Disconnected';
+                statusEl.textContent = '● Disconnected (Retrying...)';
                 statusEl.classList.remove('connected');
-                // Only auto-reconnect if it wasn't triggered by us switching rooms
-                if (!intentionallyClosing) {
-                    setTimeout(connectWebSocket, 3000);
-                }
+                // Automatically attempt to reconnect after 3 seconds
+                reconnectTimeout = setTimeout(connectWebSocket, 3000);
             };
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 
                 if (data.type === 'sync') {
+                    // Wipe canvas clean
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Redraw entire history instantly
                     data.history.forEach(action => {
-                        drawLine(action.x0, action.y0, action.x1, action.y1, action.color, action.width, false, null);
+                        drawLine(action.x0, action.y0, action.x1, action.y1, action.color, action.width, null, false);
                     });
-                } else if (data.type === 'draw') {
-                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.width, false, null);
+                } 
+                else if (data.type === 'draw') {
+                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.width, data.strokeId, false);
                 }
             };
         }
+        
+        // Initial connection
         connectWebSocket();
 
-        // --- 6. CANVAS DRAWING LOGIC ---
+        // --- 4. CANVAS DRAWING LOGIC ---
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         let isDrawing = false;
-        let lastX = 0; let lastY = 0;
-        let currentStrokeId = null; // Used to identify unique motions for the Back button
+        let lastX = 0;
+        let lastY = 0;
 
         function getMousePos(e) {
             const rect = canvas.getBoundingClientRect();
-            let clientX = e.clientX; let clientY = e.clientY;
+            let clientX = e.clientX;
+            let clientY = e.clientY;
+
             if (e.touches && e.touches.length > 0) {
-                clientX = e.touches[0].clientX; clientY = e.touches[0].clientY;
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
             }
-            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
-            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
         }
 
-        function drawLine(x0, y0, x1, y1, color, width, emit, strokeId) {
-            ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1);
-            ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke(); ctx.closePath();
+        // Updated drawLine accepts strokeId so it can be sent to server
+        function drawLine(x0, y0, x1, y1, color, width, strokeId, emit) {
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.stroke();
+            ctx.closePath();
 
             if (!emit || !socket || socket.readyState !== WebSocket.OPEN) return;
 
-            socket.send(JSON.stringify({
+            const drawData = {
                 type: 'draw',
                 x0: x0, y0: y0, x1: x1, y1: y1,
-                color: color, width: width,
-                strokeId: strokeId // Attach the ID so the server knows which lines belong together
-            }));
+                color: color,
+                width: width,
+                strokeId: strokeId
+            };
+            socket.send(JSON.stringify(drawData));
         }
 
         function startDrawing(e) {
             e.preventDefault();
             isDrawing = true;
-            // Generate a random string to act as the ID for this specific continuous drawing motion
-            currentStrokeId = Math.random().toString(36).substr(2, 9); 
+            
+            // Start a new stroke, generate a new ID
+            currentStrokeId = generateStrokeId();
             
             const pos = getMousePos(e);
-            lastX = pos.x; lastY = pos.y;
-            drawLine(lastX, lastY, lastX, lastY, currentColor, currentStroke, true, currentStrokeId);
+            lastX = pos.x;
+            lastY = pos.y;
+            
+            drawLine(lastX, lastY, lastX, lastY, currentColor, currentStroke, currentStrokeId, true);
         }
 
         function continueDrawing(e) {
             e.preventDefault();
             if (!isDrawing) return;
             const pos = getMousePos(e);
-            drawLine(lastX, lastY, pos.x, pos.y, currentColor, currentStroke, true, currentStrokeId);
-            lastX = pos.x; lastY = pos.y;
+            
+            drawLine(lastX, lastY, pos.x, pos.y, currentColor, currentStroke, currentStrokeId, true);
+            
+            lastX = pos.x;
+            lastY = pos.y;
         }
 
-        function stopDrawing(e) { e.preventDefault(); isDrawing = false; }
+        function stopDrawing(e) {
+            e.preventDefault();
+            isDrawing = false;
+        }
 
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', continueDrawing);
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseout', stopDrawing);
+
         canvas.addEventListener('touchstart', startDrawing, { passive: false });
         canvas.addEventListener('touchmove', continueDrawing, { passive: false });
         canvas.addEventListener('touchend', stopDrawing, { passive: false });
