@@ -49,26 +49,20 @@
             border-radius: 8px;
         }
 
-        /* Highlight Admin Tools */
-        #admin-tools {
-            background: rgba(255, 77, 77, 0.2);
-            display: none; /* Hidden by default */
-        }
-
         .tool-label {
             color: var(--text-color);
             font-size: 14px;
             font-weight: 600;
             margin-right: 5px;
         }
-
+        
         #main-heading {
             width: 100%; 
             text-align: center; 
             font-size: 18px; 
             margin-bottom: 5px;
-            user-select: none; /* Prevent text highlighting during rapid taps */
             cursor: pointer;
+            user-select: none; /* prevents text highlighting while spam-clicking */
         }
 
         .color-btn {
@@ -109,30 +103,37 @@
             border-radius: 50%;
         }
 
-        /* Button Styles */
-        button {
+        .action-btn {
+            background-color: #555;
+            color: white;
             border: none;
             padding: 8px 12px;
             border-radius: 6px;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             cursor: pointer;
-            transition: opacity 0.2s;
-            color: white;
+            transition: background-color 0.2s;
         }
-        button:hover { opacity: 0.8; }
         
-        #back-btn { background-color: #ff9500; }
+        .action-btn:hover { background-color: #777; }
         #clear-btn { background-color: #ff4d4d; }
-        .admin-btn { background-color: #8E8E93; }
+        #clear-btn:hover { background-color: #ff1a1a; }
+        
+        /* Admin specific buttons */
+        .admin-btn { background-color: #AF52DE; }
+        .admin-btn:hover { background-color: #8A2BE2; }
+
+        #admin-tools {
+            display: none; /* Hidden by default */
+        }
 
         #status {
             color: #ff4d4d;
             font-size: 12px;
             font-weight: bold;
             margin-left: auto;
-            user-select: none;
             cursor: pointer;
+            user-select: none;
         }
         #status.connected { color: #4CAF50; }
 
@@ -184,17 +185,17 @@
             <span class="tool-label">Size</span>
         </div>
 
-        <!-- Actions -->
+        <!-- Action Buttons -->
         <div class="tool-group">
-            <button id="back-btn">Back</button>
-            <button id="clear-btn">Clear My Drawings</button>
+            <button id="undo-btn" class="action-btn">Back</button>
+            <button id="clear-btn" class="action-btn">Clear My Drawings</button>
         </div>
 
         <!-- Admin Tools (Hidden initially) -->
         <div class="tool-group" id="admin-tools">
-            <span class="tool-label" style="width:100%;text-align:center;">Admin</span>
-            <button id="clear-all-btn" class="admin-btn">Clear All</button>
-            <button id="clear-except-me-btn" class="admin-btn">Clear All Except Me</button>
+            <span class="tool-label" style="color: #AF52DE">Admin</span>
+            <button id="clear-all-btn" class="action-btn admin-btn">Clear All</button>
+            <button id="clear-except-me-btn" class="action-btn admin-btn">Clear All Except Me</button>
         </div>
 
         <!-- Connection Status -->
@@ -217,9 +218,63 @@
         let currentColor = colors[0];
         let currentStroke = strokes[2]; 
         
-        let currentStrokeId = null; // Used for "Undo" functionality
+        let currentRoom = 'global-room'; // Default room
+        let currentStrokeId = null; // Tracks the current continuous drawing motion
 
-        // --- 2. UI SETUP ---
+        // --- 2. MULTI-CLICK EASTER EGG LOGIC ---
+        function detectMultiClick(clickArray, threshold, timeWindow, onSuccess) {
+            const now = Date.now();
+            clickArray.push(now);
+            // Remove clicks older than our time window (2000ms)
+            while (clickArray.length > 0 && now - clickArray[0] > timeWindow) {
+                clickArray.shift();
+            }
+            if (clickArray.length >= threshold) {
+                clickArray.length = 0; // Reset
+                onSuccess();
+            }
+        }
+
+        // Feature: Secret Place
+        const headingEl = document.getElementById('main-heading');
+        let headingClicks =[];
+        
+        function handleHeadingClick() {
+            detectMultiClick(headingClicks, 7, 2000, () => {
+                const pwd = prompt("Secret Place Access:");
+                if (pwd === "paiza") {
+                    alert("Welcome to the Secret Place.");
+                    headingEl.textContent = "Secret Place";
+                    headingEl.removeEventListener('click', handleHeadingClick); // Prevent re-triggering
+                    
+                    // Switch rooms
+                    currentRoom = 'secret-room';
+                    if (socket) socket.close();
+                    connectWebSocket();
+                } else {
+                    alert("Access Denied.");
+                }
+            });
+        }
+        headingEl.addEventListener('click', handleHeadingClick);
+
+        // Feature: Admin Mode
+        const statusEl = document.getElementById('status');
+        let statusClicks =[];
+
+        statusEl.addEventListener('click', () => {
+            detectMultiClick(statusClicks, 7, 2000, () => {
+                const pwd = prompt("Enter Admin Password:");
+                if (pwd === "area51") {
+                    document.getElementById('admin-tools').style.display = 'flex';
+                    alert("Admin privileges granted.");
+                } else {
+                    alert("Access Denied.");
+                }
+            });
+        });
+
+        // --- 3. UI SETUP ---
         const colorPicker = document.getElementById('color-picker');
         colors.forEach(color => {
             const btn = document.createElement('div');
@@ -255,24 +310,16 @@
             strokePicker.appendChild(btn);
         });
 
-        // Generate a random string for identifying specific drawing strokes
-        function generateStrokeId() {
-            return Date.now().toString(36) + Math.random().toString(36).substring(2);
-        }
-
-        // --- BUTTON ACTIONS ---
-        document.getElementById('back-btn').addEventListener('click', () => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'undo' }));
-            }
-        });
-
+        // Standard Actions
         document.getElementById('clear-btn').addEventListener('click', () => {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'clear' }));
-            }
+            if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'clear' }));
         });
 
+        document.getElementById('undo-btn').addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: 'undo' }));
+        });
+
+        // Admin Actions
         document.getElementById('clear-all-btn').addEventListener('click', () => {
             if (socket && socket.readyState === WebSocket.OPEN) {
                 socket.send(JSON.stringify({ type: 'clear_all', password: 'area51' }));
@@ -285,112 +332,51 @@
             }
         });
 
-        // --- MULTI-TAP EASTER EGG LOGIC ---
-        // Helper function to detect rapid consecutive taps
-        function createMultiTapListener(triggerCount, timeWindow, callback) {
-            let tapTimes =[];
-            return function(e) {
-                const now = Date.now();
-                tapTimes.push(now);
-                // Remove taps older than our time window
-                tapTimes = tapTimes.filter(time => now - time < timeWindow);
-                
-                if (tapTimes.length >= triggerCount) {
-                    tapTimes =[]; // Reset
-                    callback();
-                }
-            }
-        }
-
-        // Easter Egg 1: Admin Mode (Status indicator)
-        const statusTapHandler = createMultiTapListener(7, 2000, () => {
-            const pwd = prompt("Enter Admin Password:");
-            if (pwd === "area51") {
-                document.getElementById('admin-tools').style.display = 'flex';
-                alert("Admin Mode Unlocked.");
-            }
-        });
-        document.getElementById('status').addEventListener('pointerdown', statusTapHandler);
-
-        // Easter Egg 2: Secret Place (Heading)
-        const headingElement = document.getElementById('main-heading');
-        const headingTapHandler = createMultiTapListener(7, 2000, () => {
-            const pwd = prompt("Enter Secret Place Password:");
-            if (pwd === "paiza") {
-                alert("Teleporting to Secret Place...");
-                
-                // 1. Update UI
-                headingElement.textContent = "Secret Place";
-                headingElement.style.color = "#FFD700"; // Give it a gold color
-                
-                // 2. Remove listener so it can't be triggered again
-                headingElement.removeEventListener('pointerdown', headingTapHandler);
-                
-                // 3. Switch rooms
-                currentRoom = 'secret';
-                
-                // Disconnect. The onclose handler will automatically reconnect us 
-                // using the new currentRoom variable!
-                if (socket) socket.close(); 
-            }
-        });
-        headingElement.addEventListener('pointerdown', headingTapHandler);
-
-
-        // --- 3. WEBSOCKET SETUP ---
-        const BASE_WS_URL = 'wss://pictography-backend.storm-fyre.workers.dev'; 
-        let currentRoom = 'global-room';
+        // --- 4. WEBSOCKET SETUP ---
         let socket;
-        let reconnectTimeout;
-        const statusEl = document.getElementById('status');
 
         function connectWebSocket() {
-            // Append the room name to the URL
-            const url = `${BASE_WS_URL}?room=${currentRoom}`;
-            socket = new WebSocket(url);
+            // URL now appends the room variable so the backend can route us properly
+            const WS_URL = `wss://pictography-backend.storm-fyre.workers.dev?room=${currentRoom}`; 
+            socket = new WebSocket(WS_URL);
 
             socket.onopen = () => {
                 statusEl.textContent = '● Connected';
                 statusEl.classList.add('connected');
-                clearTimeout(reconnectTimeout);
             };
 
             socket.onclose = () => {
                 statusEl.textContent = '● Disconnected (Retrying...)';
                 statusEl.classList.remove('connected');
-                // Automatically attempt to reconnect after 3 seconds
-                reconnectTimeout = setTimeout(connectWebSocket, 3000);
+                // Only retry if we aren't intentionally switching rooms
+                setTimeout(connectWebSocket, 3000);
             };
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 
                 if (data.type === 'sync') {
-                    // Wipe canvas clean
+                    // Wipe canvas and redraw history
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    // Redraw entire history instantly
                     data.history.forEach(action => {
-                        drawLine(action.x0, action.y0, action.x1, action.y1, action.color, action.width, null, false);
+                        drawLine(action.x0, action.y0, action.x1, action.y1, action.color, action.width, false);
                     });
                 } 
                 else if (data.type === 'draw') {
-                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.width, data.strokeId, false);
+                    drawLine(data.x0, data.y0, data.x1, data.y1, data.color, data.width, false);
                 }
             };
         }
-        
-        // Initial connection
         connectWebSocket();
 
-        // --- 4. CANVAS DRAWING LOGIC ---
+        // --- 5. CANVAS DRAWING LOGIC ---
         const canvas = document.getElementById('board');
         const ctx = canvas.getContext('2d');
         
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
-        
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -417,8 +403,12 @@
             };
         }
 
-        // Updated drawLine accepts strokeId so it can be sent to server
-        function drawLine(x0, y0, x1, y1, color, width, strokeId, emit) {
+        // Generates a random string to identify one continuous drawing motion
+        function generateStrokeId() {
+            return Math.random().toString(36).substring(2, 9);
+        }
+
+        function drawLine(x0, y0, x1, y1, color, width, emit) {
             ctx.beginPath();
             ctx.moveTo(x0, y0);
             ctx.lineTo(x1, y1);
@@ -434,7 +424,7 @@
                 x0: x0, y0: y0, x1: x1, y1: y1,
                 color: color,
                 width: width,
-                strokeId: strokeId
+                strokeId: currentStrokeId // Attach stroke ID to payload
             };
             socket.send(JSON.stringify(drawData));
         }
@@ -442,24 +432,21 @@
         function startDrawing(e) {
             e.preventDefault();
             isDrawing = true;
-            
-            // Start a new stroke, generate a new ID
+            // Generate a fresh ID for this new stroke motion
             currentStrokeId = generateStrokeId();
             
             const pos = getMousePos(e);
             lastX = pos.x;
             lastY = pos.y;
             
-            drawLine(lastX, lastY, lastX, lastY, currentColor, currentStroke, currentStrokeId, true);
+            drawLine(lastX, lastY, lastX, lastY, currentColor, currentStroke, true);
         }
 
         function continueDrawing(e) {
             e.preventDefault();
             if (!isDrawing) return;
             const pos = getMousePos(e);
-            
-            drawLine(lastX, lastY, pos.x, pos.y, currentColor, currentStroke, currentStrokeId, true);
-            
+            drawLine(lastX, lastY, pos.x, pos.y, currentColor, currentStroke, true);
             lastX = pos.x;
             lastY = pos.y;
         }
