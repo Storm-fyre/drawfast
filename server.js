@@ -1,5 +1,8 @@
 const WebSocket = require('ws');
-const wss = new WebSocket.Server({ port: 3000 });
+
+// Use the cloud provider's port, or default to 3000 for local testing
+const PORT = process.env.PORT || 3000; 
+const wss = new WebSocket.Server({ port: PORT });
 
 wss.on('connection', (ws) => {
     ws.on('message', (message) => {
@@ -11,4 +14,5 @@ wss.on('connection', (ws) => {
         });
     });
 });
-console.log("WebSocket running on ws://localhost:3000");
+
+console.log(`WebSocket server is running on port ${PORT}`);
