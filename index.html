@@ -242,7 +242,7 @@
         function handleHeadingClick() {
             detectMultiClick(headingClicks, 7, 2000, () => {
                 const pwd = prompt("Secret Place Access:");
-                if (pwd === "paiza") {
+                if (pwd === "area51") {
                     alert("Welcome to the Secret Place.");
                     headingEl.textContent = "Secret Place";
                     headingEl.removeEventListener('click', handleHeadingClick); // Prevent re-triggering
